@@ -10,8 +10,7 @@ def _sleep(n):
     sleep(n)
 
 
-# pages = 19
-pages = 2
+pages = 19
 rec_count = 0
 rank = []
 gname = []
@@ -39,7 +38,6 @@ url_tail += '&showlastupdate=0&showothersales=1&showgenre=1&sort=GL'
 
 for page in range(1, pages):
     surl = urlhead + str(page) + url_tail
-    #_sleep(5)
     r = requests.get(surl).text
     # r = urllib.request.urlopen(surl).read()
     soup = BeautifulSoup(r, "html.parser")
@@ -94,31 +92,28 @@ for page in range(1, pages):
         # different format for year
         if release_year.startswith('N/A'):
             year.append('N/A')
+            month.append('N/A')
+            date.append('N/A')
         else:
             if int(release_year) >= 80:
                 year_to_add = np.int32("19" + release_year)
             else:
                 year_to_add = np.int32("20" + release_year)
             year.append(year_to_add)
-        ######### 月取得
-        release_month = data[13].string.split()[1]
-        # different format for year
-        if release_month.startswith('N/A'):
-            month.append('N/A')
-        else:
+            release_month = data[13].string.split()[1]
+            release_date = data[13].string.split()[0]
             month.append(release_month)
-
-        ######### 日取得
-        release_date = data[13].string.split()[0]
-        # different format for year
-        if release_date.startswith('N/A'):
-            date.append('N/A')
-        else:
             date.append(release_date)
-
         # go to every individual website to get genre info
         url_to_game = tag.attrs['href']
-        # _sleep(10)
+
+        ## ジャンルの取得は個別データへのアクセスでありバカほど時間がかかるので、別プロセスでHTMLだけを集めておくことにする
+        ## ジャンルには暫定的にundefinedを詰める
+        print("sub_soupにgameGenInfoBoxを見つけられなかったのでジャンル不明")
+        genre.append("undefined")
+        rec_count += 1
+        continue
+
         site_raw = requests.get(url_to_game).text
 
         # site_raw = urllib.request.urlopen(url_to_game).read()
@@ -142,11 +137,7 @@ for page in range(1, pages):
         genre.append(temp_tag.next_sibling.string)
 
         rec_count += 1
-    _sleep(20)
-    # ジャンルを取得しているが、ジャンルがPlatformのものがある
-    # Platform: Super Marioなどはスーパーマリオシリーズ総称を指し、ゲーム個別ではない。
-    # 発売日については1985年となってしまっている
-    # さらに下のゲームについてスクレイピングするなどしなくてもいいのだろうか?
+    _sleep(70)
 
 columns = {
     'Rank': rank,
@@ -178,3 +169,4 @@ exit(0)
 
 # todo: 一気にやるんじゃなくて少しずつ上書きしていく形式で
 # todo: 失敗したら次にどの番号から始めればいいかをログ出力してあげる
+# todo: いや、取得とジャンル追加を分ければいける
