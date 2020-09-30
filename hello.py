@@ -2,13 +2,23 @@ from bs4 import BeautifulSoup, element
 import urllib
 import pandas as pd
 import numpy as np
+import requests
+from time import sleep
 
-pages = 19
+def _sleep(n):
+    print("過剰リクエスト防止のための" + str(n) + "秒sleep")
+    sleep(n)
+
+
+# pages = 19
+pages = 2
 rec_count = 0
 rank = []
 gname = []
 platform = []
 year = []
+month = []
+date  = []
 genre = []
 critic_score = []
 user_score = []
@@ -20,28 +30,31 @@ sales_jp = []
 sales_ot = []
 sales_gl = []
 
-urlhead = 'http://www.vgchartz.com/gamedb/?page='
-urltail = '&console=&region=All&developer=&publisher=&genre=&boxart=Both&ownership=Both'
-urltail += '&results=1000&order=Sales&showtotalsales=0&showtotalsales=1&showpublisher=0'
-urltail += '&showpublisher=1&showvgchartzscore=0&shownasales=1&showdeveloper=1&showcriticscore=1'
-urltail += '&showpalsales=0&showpalsales=1&showreleasedate=1&showuserscore=1&showjapansales=1'
-urltail += '&showlastupdate=0&showothersales=1&showgenre=1&sort=GL'
+urlhead = 'https://www.vgchartz.com/gamedb/?page='
+url_tail = '&console=&region=All&developer=&publisher=&genre=&boxart=Both&ownership=Both'
+url_tail += '&results=1000&order=Sales&showtotalsales=0&showtotalsales=1&showpublisher=0'
+url_tail += '&showpublisher=1&showvgchartzscore=0&shownasales=1&showdeveloper=1&showcriticscore=1'
+url_tail += '&showpalsales=0&showpalsales=1&showreleasedate=1&showuserscore=1&showjapansales=1'
+url_tail += '&showlastupdate=0&showothersales=1&showgenre=1&sort=GL'
 
 for page in range(1, pages):
-    surl = urlhead + str(page) + urltail
-    r = urllib.request.urlopen(surl).read()
-    soup = BeautifulSoup(r)
+    surl = urlhead + str(page) + url_tail
+    #_sleep(5)
+    r = requests.get(surl).text
+    # r = urllib.request.urlopen(surl).read()
+    soup = BeautifulSoup(r, "html.parser")
     print(f"Page: {page}")
 
     # vgchartz website is really weird so we have to search for
     # <a> tags with game urls
     game_tags = list(filter(
-        lambda x: x.attrs['href'].startswith('http://www.vgchartz.com/game/'),
+#        lambda x: x.attrs['href'].startswith('http://www.vgchartz.com/game/'),  # 大規模メディアがhttpな訳ないだろ。httpsじゃい。
+        lambda x: x.attrs['href'].startswith('https://www.vgchartz.com/game/'),
         # discard the first 10 elements because those
         # links are in the navigation bar
         soup.find_all("a")
     ))[10:]
-
+    # 試しに10件で
     for tag in game_tags:
 
         # add name to list
@@ -76,6 +89,7 @@ for page in range(1, pages):
         sales_gl.append(
             float(data[8].string[:-1]) if
             not data[8].string.startswith("N/A") else np.nan)
+        ######### 年取得
         release_year = data[13].string.split()[-1]
         # different format for year
         if release_year.startswith('N/A'):
@@ -86,14 +100,39 @@ for page in range(1, pages):
             else:
                 year_to_add = np.int32("20" + release_year)
             year.append(year_to_add)
+        ######### 月取得
+        release_month = data[13].string.split()[1]
+        # different format for year
+        if release_month.startswith('N/A'):
+            month.append('N/A')
+        else:
+            month.append(release_month)
+
+        ######### 日取得
+        release_date = data[13].string.split()[0]
+        # different format for year
+        if release_date.startswith('N/A'):
+            date.append('N/A')
+        else:
+            date.append(release_date)
 
         # go to every individual website to get genre info
         url_to_game = tag.attrs['href']
-        site_raw = urllib.request.urlopen(url_to_game).read()
+        # _sleep(10)
+        site_raw = requests.get(url_to_game).text
+
+        # site_raw = urllib.request.urlopen(url_to_game).read()
         sub_soup = BeautifulSoup(site_raw, "html.parser")
         # again, the info box is inconsistent among games so we
         # have to find all the h2 and traverse from that to the genre name
+        if sub_soup.find("div", {"id": "gameGenInfoBox"}) == None:
+            print("sub_soupにgameGenInfoBoxを見つけられなかったのでジャンル不明")
+            genre.append("undefined")
+            rec_count += 1
+            continue
+        # else
         h2s = sub_soup.find("div", {"id": "gameGenInfoBox"}).find_all('h2')
+
         # make a temporary tag here to search for the one that contains
         # the word "Genre"
         temp_tag = element.Tag
@@ -103,12 +142,19 @@ for page in range(1, pages):
         genre.append(temp_tag.next_sibling.string)
 
         rec_count += 1
+    _sleep(20)
+    # ジャンルを取得しているが、ジャンルがPlatformのものがある
+    # Platform: Super Marioなどはスーパーマリオシリーズ総称を指し、ゲーム個別ではない。
+    # 発売日については1985年となってしまっている
+    # さらに下のゲームについてスクレイピングするなどしなくてもいいのだろうか?
 
 columns = {
     'Rank': rank,
     'Name': gname,
     'Platform': platform,
     'Year': year,
+    'Month': month,
+    'Date': date,
     'Genre': genre,
     'Critic_Score': critic_score,
     'User_Score': user_score,
@@ -124,7 +170,11 @@ print(rec_count)
 df = pd.DataFrame(columns)
 print(df.columns)
 df = df[[
-    'Rank', 'Name', 'Platform', 'Year', 'Genre',
+    'Rank', 'Name', 'Platform', 'Year', 'Month', 'Date', 'Genre',
     'Publisher', 'Developer', 'Critic_Score', 'User_Score',
     'NA_Sales', 'PAL_Sales', 'JP_Sales', 'Other_Sales', 'Global_Sales']]
 df.to_csv("vgsales.csv", sep=",", encoding='utf-8', index=False)
+exit(0)
+
+# todo: 一気にやるんじゃなくて少しずつ上書きしていく形式で
+# todo: 失敗したら次にどの番号から始めればいいかをログ出力してあげる
