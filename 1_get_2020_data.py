@@ -9,6 +9,8 @@ def _sleep(n):
     print("過剰リクエスト防止のための" + str(n) + "秒sleep")
     sleep(n)
 
+def solve(s):
+    return re.sub(r'(\d)(st|nd|rd|th)', r'\1', s)
 
 pages = 19
 rec_count = 0
@@ -102,6 +104,7 @@ for page in range(1, pages):
             year.append(year_to_add)
             release_month = data[13].string.split()[1]
             release_date = data[13].string.split()[0]
+            release_date = release_date(sub)
             month.append(release_month)
             date.append(release_date)
         # go to every individual website to get genre info
@@ -109,7 +112,6 @@ for page in range(1, pages):
 
         ## ジャンルの取得は個別データへのアクセスでありバカほど時間がかかるので、別プロセスでHTMLだけを集めておくことにする
         ## ジャンルには暫定的にundefinedを詰める
-        print("sub_soupにgameGenInfoBoxを見つけられなかったのでジャンル不明")
         genre.append("undefined")
         rec_count += 1
         continue
