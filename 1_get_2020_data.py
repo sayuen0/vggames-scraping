@@ -17,7 +17,7 @@ def solve(s):
     return re.sub(r'(\d)(st|nd|rd|th)', r'\1', s)
 
 
-pages = 19
+pages = 2
 rec_count = 0
 rank = []
 gname = []
@@ -146,7 +146,7 @@ for page in range(1, pages):
         genre.append(temp_tag.next_sibling.string)
 
         rec_count += 1
-    _sleep(70)
+    _sleep(60)
 
 columns = {
     'Rank': rank,
@@ -171,9 +171,9 @@ print(rec_count)
 df = pd.DataFrame(columns)
 print(df.columns)
 df = df[[
-    'Rank', 'Name', 'Platform', 'Year', 'Month', 'Date', 'Genre','URL'
+    'Rank', 'Name', 'Platform', 'Year', 'Month', 'Date', 'Genre','URL',
     'Publisher', 'Developer', 'Critic_Score', 'User_Score',
     'NA_Sales', 'PAL_Sales', 'JP_Sales', 'Other_Sales', 'Global_Sales']]
 filename = "data/vgsales_" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".csv"
-df.to_csv("vgsales.csv", sep=",", encoding='utf-8', index=False)
+df.to_csv(filename, sep=",", encoding='utf-8', index=False)
 exit(0)
