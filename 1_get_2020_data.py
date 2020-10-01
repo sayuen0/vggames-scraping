@@ -3,7 +3,9 @@ import urllib
 import pandas as pd
 import numpy as np
 import requests
+import re
 from time import sleep
+from datetime import datetime
 
 def _sleep(n):
     print("過剰リクエスト防止のための" + str(n) + "秒sleep")
@@ -104,7 +106,7 @@ for page in range(1, pages):
             year.append(year_to_add)
             release_month = data[13].string.split()[1]
             release_date = data[13].string.split()[0]
-            release_date = release_date(sub)
+            release_date = solve(release_date)
             month.append(release_month)
             date.append(release_date)
         # go to every individual website to get genre info
@@ -166,9 +168,6 @@ df = df[[
     'Rank', 'Name', 'Platform', 'Year', 'Month', 'Date', 'Genre',
     'Publisher', 'Developer', 'Critic_Score', 'User_Score',
     'NA_Sales', 'PAL_Sales', 'JP_Sales', 'Other_Sales', 'Global_Sales']]
+filename = "data/vgsales_" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".csv"
 df.to_csv("vgsales.csv", sep=",", encoding='utf-8', index=False)
 exit(0)
-
-# todo: 一気にやるんじゃなくて少しずつ上書きしていく形式で
-# todo: 失敗したら次にどの番号から始めればいいかをログ出力してあげる
-# todo: いや、取得とジャンル追加を分ければいける
