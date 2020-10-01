@@ -7,12 +7,15 @@ import re
 from time import sleep
 from datetime import datetime
 
+
 def _sleep(n):
     print("過剰リクエスト防止のための" + str(n) + "秒sleep")
     sleep(n)
 
+
 def solve(s):
     return re.sub(r'(\d)(st|nd|rd|th)', r'\1', s)
+
 
 pages = 19
 rec_count = 0
@@ -21,8 +24,9 @@ gname = []
 platform = []
 year = []
 month = []
-date  = []
+date = []
 genre = []
+game_url = []
 critic_score = []
 user_score = []
 publisher = []
@@ -50,7 +54,7 @@ for page in range(1, pages):
     # vgchartz website is really weird so we have to search for
     # <a> tags with game urls
     game_tags = list(filter(
-#        lambda x: x.attrs['href'].startswith('http://www.vgchartz.com/game/'),  # 大規模メディアがhttpな訳ないだろ。httpsじゃい。
+        #        lambda x: x.attrs['href'].startswith('http://www.vgchartz.com/game/'),  # 大規模メディアがhttpな訳ないだろ。httpsじゃい。
         lambda x: x.attrs['href'].startswith('https://www.vgchartz.com/game/'),
         # discard the first 10 elements because those
         # links are in the navigation bar
@@ -111,6 +115,7 @@ for page in range(1, pages):
             date.append(release_date)
         # go to every individual website to get genre info
         url_to_game = tag.attrs['href']
+        game_url.append(url_to_game)
 
         ## ジャンルの取得は個別データへのアクセスでありバカほど時間がかかるので、別プロセスでHTMLだけを集めておくことにする
         ## ジャンルには暫定的にundefinedを詰める
@@ -151,6 +156,7 @@ columns = {
     'Month': month,
     'Date': date,
     'Genre': genre,
+    'URL': game_url,
     'Critic_Score': critic_score,
     'User_Score': user_score,
     'Publisher': publisher,
@@ -165,7 +171,7 @@ print(rec_count)
 df = pd.DataFrame(columns)
 print(df.columns)
 df = df[[
-    'Rank', 'Name', 'Platform', 'Year', 'Month', 'Date', 'Genre',
+    'Rank', 'Name', 'Platform', 'Year', 'Month', 'Date', 'Genre','URL'
     'Publisher', 'Developer', 'Critic_Score', 'User_Score',
     'NA_Sales', 'PAL_Sales', 'JP_Sales', 'Other_Sales', 'Global_Sales']]
 filename = "data/vgsales_" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".csv"
