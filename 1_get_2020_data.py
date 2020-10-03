@@ -6,36 +6,22 @@ import requests
 import re
 from time import sleep
 from datetime import datetime
+import os
+import sys
 
 
 def _sleep(n):
     print("過剰リクエスト防止のための" + str(n) + "秒sleep")
-    sleep(n)
-
+    for i in range(n, 0, -1):
+        print(i)
+        sleep(1)
 
 def solve(s):
     return re.sub(r'(\d)(st|nd|rd|th)', r'\1', s)
 
 
-pages = 2
+pages = 19
 rec_count = 0
-rank = []
-gname = []
-platform = []
-year = []
-month = []
-date = []
-genre = []
-game_url = []
-critic_score = []
-user_score = []
-publisher = []
-developer = []
-sales_na = []
-sales_pal = []
-sales_jp = []
-sales_ot = []
-sales_gl = []
 
 urlhead = 'https://www.vgchartz.com/gamedb/?page='
 url_tail = '&console=&region=All&developer=&publisher=&genre=&boxart=Both&ownership=Both'
@@ -44,7 +30,29 @@ url_tail += '&showpublisher=1&showvgchartzscore=0&shownasales=1&showdeveloper=1&
 url_tail += '&showpalsales=0&showpalsales=1&showreleasedate=1&showuserscore=1&showjapansales=1'
 url_tail += '&showlastupdate=0&showothersales=1&showgenre=1&sort=GL'
 
+# 保存用ディレクトリ
+dirname =  os.path.join("data", datetime.now().strftime("%Y%m%d-%H%M%S"))
+os.makedirs(dirname)
+
 for page in range(1, pages):
+    rank = []
+    gname = []
+    platform = []
+    year = []
+    month = []
+    date = []
+    genre = []
+    game_url = []
+    critic_score = []
+    user_score = []
+    publisher = []
+    developer = []
+    sales_na = []
+    sales_pal = []
+    sales_jp = []
+    sales_ot = []
+    sales_gl = []
+
     surl = urlhead + str(page) + url_tail
     r = requests.get(surl).text
     # r = urllib.request.urlopen(surl).read()
@@ -146,34 +154,36 @@ for page in range(1, pages):
         genre.append(temp_tag.next_sibling.string)
 
         rec_count += 1
+    columns = {
+        'Rank': rank,
+        'Name': gname,
+        'Platform': platform,
+        'Year': year,
+        'Month': month,
+        'Date': date,
+        'Genre': genre,
+        'Critic_Score': critic_score,
+        'User_Score': user_score,
+        'Publisher': publisher,
+        'Developer': developer,
+        'NA_Sales': sales_na,
+        'PAL_Sales': sales_pal,
+        'JP_Sales': sales_jp,
+        'Other_Sales': sales_ot,
+        'Global_Sales': sales_gl,
+        'URL': game_url
+
+    }
+    print(rec_count)
+    df = pd.DataFrame(columns)
+    print(df.columns)
+    df = df[[
+        'Rank', 'Name', 'Platform', 'Year', 'Month', 'Date', 'Genre',
+        'Publisher', 'Developer', 'Critic_Score', 'User_Score',
+        'NA_Sales', 'PAL_Sales', 'JP_Sales', 'Other_Sales', 'Global_Sales', 'URL']]
+    filename = os.path.join(dirname, "vgsales_" + str(page) + ".csv")
+    df.to_csv(filename, sep="," , encoding='utf-8', index=False)
+
     _sleep(60)
 
-columns = {
-    'Rank': rank,
-    'Name': gname,
-    'Platform': platform,
-    'Year': year,
-    'Month': month,
-    'Date': date,
-    'Genre': genre,
-    'URL': game_url,
-    'Critic_Score': critic_score,
-    'User_Score': user_score,
-    'Publisher': publisher,
-    'Developer': developer,
-    'NA_Sales': sales_na,
-    'PAL_Sales': sales_pal,
-    'JP_Sales': sales_jp,
-    'Other_Sales': sales_ot,
-    'Global_Sales': sales_gl
-}
-print(rec_count)
-df = pd.DataFrame(columns)
-print(df.columns)
-df = df[[
-    'Rank', 'Name', 'Platform', 'Year', 'Month', 'Date', 'Genre','URL',
-    'Publisher', 'Developer', 'Critic_Score', 'User_Score',
-    'NA_Sales', 'PAL_Sales', 'JP_Sales', 'Other_Sales', 'Global_Sales']]
-filename = "data/vgsales_" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".csv"
-df.to_csv(filename, sep=",", encoding='utf-8', index=False)
 exit(0)
