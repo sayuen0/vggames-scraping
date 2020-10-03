@@ -14,7 +14,7 @@ def _sleep(n):
         print(i)
         sleep(1)
 
-pages = 18 + 1
+pages = 1 + 1
 
 time = "20201003-012640"
 new_dirname = os.path.join("data", "genre_2020_filled", time)
@@ -29,7 +29,7 @@ for page in range(1, pages):
     for i_2020, row_2020 in d_2020.iterrows():
         # Seriesデータとundefinedじゃないデータは見る必要なし
         if row_2020["Platform"] == "Series" or row_2020["New_Genre"] != "undefined":
-            print(f"{row_2020['Rank']} : {row_2020['Name']} :{row_2020['New_Genre']}")
+            print(f"{row_2020['Rank']} : {row_2020['Name']} :{row_2020['New_Genre']}: {row_2020['Platform']}")
             genre_2020.append(row_2020["New_Genre"])
             continue
 
