@@ -14,14 +14,15 @@ def _sleep(n):
         print(i)
         sleep(1)
 
-pages = 1 + 1
+pages = 18 + 1
 
 time = "20201003-012640"
 new_dirname = os.path.join("data", "genre_2020_filled", time)
 os.makedirs(new_dirname, exist_ok=True)
 
 dirname = os.path.join("data", "genre_2017_filled", time)
-for page in range(1, pages):
+
+for page in range(12, pages):
     old_filename = os.path.join(dirname, "vgsales_" + str(page) + ".csv")
     d_2020 = pd.read_csv(old_filename)
     genre_2020 = []
