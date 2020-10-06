@@ -5,6 +5,17 @@
 
 ## 内容物
 
+- `data/genre_2020_filled/20201003-012640/vgsales_1.csv ~ vgsales_18.csv`
+  - 最終的なデータです。シリーズデータ込みトータル18000件ですが、シリーズデータについてはジャンルの取得を省いています。
+  - 障害耐性の都合1000件ずつまとめて取ったので結合して使ってください。
+  - ジャンルは`Genre_2020`という列に入っています
+  - 月、日はそれぞれ`Month,Date`という列に入っています。
+    - `Month`については`Sep`など英名で取得しているので、適宜ダミー化してください
+    - `Date`については数値で取得しました
+   
+ 
+以下読まなくても問題ないです
+
 - `https://github.com/sayuen0/vggames-scraping/blob/master/vgsales_2017.csv`
     - 2017年の原本です。紹介されたやつと同じファイル
 - `https://github.com/sayuen0/vggames-scraping/blob/master/vgsales.csv`
